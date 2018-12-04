@@ -20,3 +20,6 @@ setup:
 
 test:
 	$(V_COMMAND) python3 -m pytest --verbose
+
+run:
+	$(V_COMMAND) python3 movit/movit.py "movit/default_board.json"

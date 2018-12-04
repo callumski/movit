@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 from string import ascii_lowercase
 
@@ -31,7 +32,12 @@ class Board(object):
 
 
 if __name__ == '__main__':
-    with open('default_board.json', mode="r") as file:
+    parser = argparse.ArgumentParser(description="movit.py: Looks for solution "
+                                                 "to a board problem.")
+    parser.add_argument("file", help="JSON file of board setup")
+    args = parser.parse_args()
+
+    with open(args.file, mode="r") as file:
         board = Board(file.read())
 
     for piece in board.get_pieces():
