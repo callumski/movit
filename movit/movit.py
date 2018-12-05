@@ -50,12 +50,20 @@ class Board(object):
     def is_move_available(self, move):
         new_pos = move.get_new_position()
         for i in new_pos:
-            if self.state[i[1]][i[0]] != " ":
+            cell = self.state[i[1]][i[0]]
+            if not self._cell_is_free(cell, move.piece.name) \
+                    and not self._piece_can_exit(cell, move.piece.name):
                 return False
         return True
 
+    def _cell_is_free(self, cell, name):
+        return cell == " " or cell == name
+
+    def _piece_can_exit(self, cell, name):
+        return cell == "Z" and name == 'b'
+
     def get_available_moves(self):
-        opts = ((1, 0), (2, 0), (0, 1), (0, 2))
+        opts = ((1, 0), (0, 1), (-1, 0), (0, -1))
         moves = []
         for pce in self.get_pieces():
             for opt in opts:
