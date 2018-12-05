@@ -12,6 +12,23 @@ class Piece(object):
     def __str__(self):
         return "{}: {}".format(self.name, str(self.pos_tup))
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
+class Move(object):
+    def __init__(self, piece, x, y):
+        self.piece = piece
+        self.x = x
+        self.y = y
+
+    def get_new_position(self):
+        return tuple(
+            (sqr[0] + self.x, sqr[1] + self.y) for sqr in self.piece.pos_tup)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class Board(object):
     def __init__(self, json_string):
@@ -29,6 +46,23 @@ class Board(object):
 
     def get_pieces(self):
         return [self.get_piece(name) for name in self.get_piece_names()]
+
+    def is_move_available(self, move):
+        new_pos = move.get_new_position()
+        for i in new_pos:
+            if self.state[i[1]][i[0]] != " ":
+                return False
+        return True
+
+    def get_available_moves(self):
+        opts = ((1, 0), (2, 0), (0, 1), (0, 2))
+        moves = []
+        for pce in self.get_pieces():
+            for opt in opts:
+                move = Move(pce, opt[0], opt[1])
+                if self.is_move_available(move):
+                    moves.append(move)
+        return moves
 
 
 if __name__ == '__main__':
