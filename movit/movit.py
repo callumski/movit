@@ -94,10 +94,10 @@ class Board(object):
                     new_y.append(self._state[y][x])
             new_state.append(tuple(new_y))
         return Board(state=tuple(new_state))
-        
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="movit.py: Looks for solution "
+    parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
                                                  "to a board problem.")
     parser.add_argument("file", help="JSON file of board setup")
     args = parser.parse_args()

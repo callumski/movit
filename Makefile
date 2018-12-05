@@ -16,10 +16,9 @@ setup:
 	$(V_COMMAND) pip install --upgrade setuptools
 	$(V_COMMAND) pip install -r requirements.txt
 	$(V_COMMAND) pip install -e .
-	mkdir output
 
 test:
-	$(V_COMMAND) python3 -m pytest --verbose
+	$(V_COMMAND) py.test --verbose --flake8 --isort
 
 run:
 	$(V_COMMAND) python3 movit/movit.py "movit/default_board.json"

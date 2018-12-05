@@ -1,7 +1,6 @@
 from movit.movit import Board, Move, Piece
-
-from tests.conftest import BOARD_1, BOARD_2, BOARD_3, BOARD_4, BOARD_5, \
-    BOARD_6, BOARD_6A, BOARD_7, BOARD_8
+from tests.conftest import (BOARD_1, BOARD_2, BOARD_3, BOARD_4, BOARD_5,
+                            BOARD_6, BOARD_6A, BOARD_7, BOARD_8)
 
 
 def test_board_init():
