@@ -115,7 +115,6 @@ def solve_board(start_board):
     queue = deque([start_board])
     visited_boards = set()
     while queue:
-        print(len(visited_boards))
         board = queue.popleft()
         if not board.get_piece('b'):
             return board
