@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import json
+from collections import deque
 from string import ascii_lowercase
+from pathlib import Path
+
+THIS_DIR = str(Path(__file__).resolve().parent)
 
 
 class Piece(object):
@@ -25,26 +29,32 @@ class Move(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __repr__(self):
+        return "{}: x:{} y:{}".format(self.piece, self.x, self.y)
+
     def get_new_position(self):
         return tuple(
             (sqr[0] + self.x, sqr[1] + self.y) for sqr in self.piece.pos_tup)
 
 
 class Board(object):
-    def __init__(self, json_string=None, state=None):
+    def __init__(self, json_string=None, state=None, previous=None, move=None):
         if json_string:
             self._state = tuple(tuple(y) for y in json.loads(json_string))
         elif state:
             self._state = state
+        self.previous = previous
+        self.move = move
 
     def __eq__(self, other):
         return self._state == other._state
 
     def get_piece(self, name):
-        return Piece(name,
-                     tuple([(x, y) for y in range(len(self._state)) for x in
-                            range(len(self._state[y])) if
-                            self._state[y][x] == name]))
+        if name in self.get_piece_names():
+            return Piece(name,
+                         tuple([(x, y) for y in range(len(self._state)) for x in
+                                range(len(self._state[y])) if
+                                self._state[y][x] == name]))
 
     def get_piece_names(self):
         return sorted(
@@ -69,7 +79,12 @@ class Board(object):
         return cell == "Z" and name == 'b'
 
     def get_available_moves(self):
-        opts = ((1, 0), (0, 1), (-1, 0), (0, -1))
+        prev_move = None
+        if self.move:
+            prev_move = (-1 * self.move.x, -1 * self.move.y)
+        opts = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+        if prev_move:
+            opts.remove(prev_move)
         moves = []
         for pce in self.get_pieces():
             for opt in opts:
@@ -93,17 +108,46 @@ class Board(object):
                 else:
                     new_y.append(self._state[y][x])
             new_state.append(tuple(new_y))
-        return Board(state=tuple(new_state))
+        return Board(state=tuple(new_state), previous=self, move=move)
+
+
+def solve_board(start_board):
+    queue = deque([start_board])
+    visited_boards = set()
+    while queue:
+        print(len(visited_boards))
+        board = queue.popleft()
+        if not board.get_piece('b'):
+            return board
+        for next_board in [board.apply_move(move) for move in
+                           board.get_available_moves()]:
+            if next_board._state not in visited_boards:
+                visited_boards.add(next_board._state)
+                queue.append(next_board)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
                                                  "to a board problem.")
-    parser.add_argument("file", help="JSON file of board setup")
+    parser.add_argument("file", help="JSON file of board setup", nargs='?')
     args = parser.parse_args()
+
+    if not args.file:
+        args.file = THIS_DIR + "/simple_board.json"
 
     with open(args.file, mode="r") as file:
         board = Board(file.read())
 
-    for piece in board.get_pieces():
-        print(piece)
+    final_board = solve_board(board)
+    if final_board:
+        solution = []
+        while final_board.previous:
+            solution.append(final_board)
+            final_board = final_board.previous
+
+        solution.reverse()
+
+        for state in solution:
+            for y in state._state:
+                print(y)
+            print("--------------------------------")
