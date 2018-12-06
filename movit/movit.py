@@ -21,8 +21,9 @@ class Piece(object):
 
 
 class Move(object):
-    def __init__(self, piece, x, y):
+    def __init__(self, piece, x, y, double=False):
         self.piece = piece
+        self.double = double
         self.x = x
         self.y = y
 
@@ -30,10 +31,14 @@ class Move(object):
         return self.__dict__ == other.__dict__
 
     def __repr__(self):
-        return "{}: x:{} y:{}".format(self.piece, self.x, self.y)
+        return "{}: x:{} y:{} double:{}".format(self.piece, self.x, self.y,
+                                                self.double)
 
     def get_new_position(self):
-        return [(sqr[0] + self.x, sqr[1] + self.y) for sqr in
+        mult = 1
+        if self.double:
+            mult = 2
+        return [(sqr[0] + (mult * self.x), sqr[1] + (mult * self.y)) for sqr in
                 self.piece.pos_tup]
 
 
@@ -72,7 +77,10 @@ class Board(object):
     def is_move_available(self, move):
         new_pos = move.get_new_position()
         for i in new_pos:
-            cell = self._state[i[1]][i[0]]
+            try:
+                cell = self._state[i[1]][i[0]]
+            except IndexError:
+                return False
             if not self._cell_is_free(cell, move.piece.name) \
                     and not self._piece_can_exit(cell, move.piece.name):
                 return False
@@ -96,6 +104,9 @@ class Board(object):
             for opt in opts:
                 move = Move(pce, opt[0], opt[1])
                 if self.is_move_available(move):
+                    move.double = True
+                    if not self.is_move_available(move):
+                        move.double = False
                     moves.append(move)
         return moves
 
