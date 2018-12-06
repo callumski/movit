@@ -101,7 +101,7 @@ class Board(object):
         return moves
 
     def _get_candidate_pieces(self):
-        candidates = [self._state[1][0] for empty in
+        candidates = [self._state[cell[1]][cell[0]] for empty in
                       self._get_empty_cells() for cell in
                       self._get_neighbours(empty[0], empty[1])]
         candidates = {candidate for candidate in candidates if

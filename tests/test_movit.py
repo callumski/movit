@@ -43,19 +43,19 @@ def test_board_get_pieces():
 
 def test_board_is_move_available_success():
     b = Board(json_string=BOARD_4)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 1, 0)
     assert b.is_move_available(m)
 
     b = Board(json_string=BOARD_5)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 1, 0)
     assert b.is_move_available(m)
 
 
 def test_board_is_move_available_failure():
     b = Board(json_string=BOARD_4)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 0, 1)
     assert not b.is_move_available(m)
     m = Move(p, -1, 0)
