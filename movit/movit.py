@@ -112,15 +112,26 @@ class Board(object):
     def _update_cell(self, state, cell, name):
         if state[cell[0]][cell[1]] not in ["X", "Z"]:
             state[cell[0]][cell[1]] = name
+            return True
+
+    def _update_piece_for_exit(self, cell, pos):
+        return np.array([cel for cel in pos if not (cel == cell).all()])
 
     def apply_move(self, move):
+        pce = move.piece.name
         new_pos = move.get_new_position()
         new_state = self._state.copy()
         for cell in move.piece.cells:
             self._clear_cell(new_state, cell)
         for cell in new_pos:
-            self._update_cell(new_state, cell, move.piece.name)
-        return Board(state=new_state, previous=self, move=move)
+            if not self._update_cell(new_state, cell, pce):
+                new_pos = self._update_piece_for_exit(cell, new_pos)
+        new_pieces = self.get_pieces().copy()
+        new_pieces.pop(pce)
+        if len(new_pos) > 0:
+            new_pieces[pce] = Piece(pce, new_pos)
+        return Board(state=new_state, previous=self, move=move,
+                     pieces=new_pieces)
 
 
 def solve_board(start_board):
