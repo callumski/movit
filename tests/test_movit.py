@@ -21,6 +21,7 @@ def test_board_get_piece_success():
     assert p.name == 'a'
     assert p.pos_tup == ((1, 1),)
 
+
 def test_board_get_piece_failure():
     b = Board(json_string=BOARD_2)
     p = b.get_piece('w')

@@ -2,8 +2,8 @@
 import argparse
 import json
 from collections import deque
-from string import ascii_lowercase
 from pathlib import Path
+from string import ascii_lowercase
 
 THIS_DIR = str(Path(__file__).resolve().parent)
 
@@ -52,8 +52,8 @@ class Board(object):
     def get_piece(self, name):
         if name in self.get_piece_names():
             return Piece(name,
-                         tuple([(x, y) for y in range(len(self._state)) for x in
-                                range(len(self._state[y])) if
+                         tuple([(x, y) for y in range(len(self._state))
+                                for x in range(len(self._state[y])) if
                                 self._state[y][x] == name]))
 
     def get_piece_names(self):
@@ -126,6 +126,7 @@ def solve_board(start_board):
                 visited_boards.add(next_board._state)
                 queue.append(next_board)
     return (result, len(visited_boards))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
