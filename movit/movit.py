@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
 import argparse
 import json
-from collections import deque
+from collections import deque, namedtuple
 from pathlib import Path
 from string import ascii_lowercase
 
+import numpy as np
+
 THIS_DIR = str(Path(__file__).resolve().parent)
 
-
-class Piece(object):
-    def __init__(self, name, pos_tup):
-        self.name = name
-        self.pos_tup = pos_tup
-
-    def __str__(self):
-        return "{}: {}".format(self.name, str(self.pos_tup))
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+Piece = namedtuple('Piece', ['name', 'cells'])
 
 
 class Move(object):
@@ -33,40 +25,44 @@ class Move(object):
         return "{}: x:{} y:{}".format(self.piece, self.x, self.y)
 
     def get_new_position(self):
-        return tuple(
-            (sqr[0] + self.x, sqr[1] + self.y) for sqr in self.piece.pos_tup)
+        new_pos = np.add([self.y, self.x], self.piece.cells)
+        return new_pos
 
 
 class Board(object):
-    def __init__(self, json_string=None, state=None, previous=None, move=None):
+    def __init__(self, json_string=None, state=None, previous=None, move=None,
+                 pieces=None):
         if json_string:
-            self._state = tuple(tuple(y) for y in json.loads(json_string))
-        elif state:
+            self._state = np.array(json.loads(json_string))
+        elif state is not None:
             self._state = state
+        self._pieces = pieces
         self.previous = previous
         self.move = move
+        self.hash_state = tuple(self._state.flatten())
 
     def __eq__(self, other):
-        return self._state == other._state
+        return (self._state == other._state).all()
 
-    def get_piece(self, name):
-        if name in self.get_piece_names():
-            return Piece(name,
-                         tuple([(x, y) for y in range(len(self._state))
-                                for x in range(len(self._state[y])) if
-                                self._state[y][x] == name]))
-
-    def get_piece_names(self):
-        return sorted(
-            {j for i in self._state for j in i if j in ascii_lowercase})
+    def __repr__(self):
+        return repr(self._state)
 
     def get_pieces(self):
-        return [self.get_piece(name) for name in self.get_piece_names()]
+        if not self._pieces:
+            self._init_pieces()
+        return self._pieces
 
-    def is_move_available(self, move):
+    def _init_pieces(self):
+        names = [name for name in np.unique(self._state) if
+                 name in ascii_lowercase]
+        self._pieces = {name: Piece(name, np.argwhere(self._state == name)) for
+                        name in
+                        names}
+
+    def is_move_possible(self, move):
         new_pos = move.get_new_position()
         for i in new_pos:
-            cell = self._state[i[1]][i[0]]
+            cell = self._state.item((i[0], i[1]))
             if not self._cell_is_free(cell, move.piece.name) \
                     and not self._piece_can_exit(cell, move.piece.name):
                 return False
@@ -86,29 +82,45 @@ class Board(object):
         if prev_move:
             opts.remove(prev_move)
         moves = []
-        for pce in self.get_pieces():
+        for piece in [self.get_pieces()[name] for name in
+                      self._get_candidate_pieces()]:
             for opt in opts:
-                move = Move(pce, opt[0], opt[1])
-                if self.is_move_available(move):
+                move = Move(piece, opt[0], opt[1])
+                if self.is_move_possible(move):
                     moves.append(move)
         return moves
 
+    def _get_candidate_pieces(self):
+        candidates = [self._state.item(cell[0], cell[1]) for empty in
+                      self._get_empty_cells() for cell in
+                      self._get_neighbours(empty[0], empty[1])]
+        candidates = {candidate for candidate in candidates if
+                      candidate in ascii_lowercase}
+        candidates.add('b')
+        return candidates
+
+    def _get_empty_cells(self):
+        return np.argwhere(self._state == ' ')
+
+    def _get_neighbours(self, x, y):
+        nbhs = np.array([[x + 1, y], [x, y + 1], [x - 1, y], [x, y - 1]])
+        return nbhs
+
+    def _clear_cell(self, state, cell):
+        state[cell[0]][cell[1]] = ' '
+
+    def _update_cell(self, state, cell, name):
+        if state[cell[0]][cell[1]] not in ["X", "Z"]:
+            state[cell[0]][cell[1]] = name
+
     def apply_move(self, move):
-        pce = move.piece.name
         new_pos = move.get_new_position()
-        new_state = []
-        for y in range(len(self._state)):
-            new_y = []
-            for x in range(len(self._state[y])):
-                cell = self._state[y][x]
-                if (x, y) in new_pos and cell != "Z":
-                    new_y.append(pce)
-                elif cell == pce:
-                    new_y.append(" ")
-                else:
-                    new_y.append(self._state[y][x])
-            new_state.append(tuple(new_y))
-        return Board(state=tuple(new_state), previous=self, move=move)
+        new_state = self._state.copy()
+        for cell in move.piece.cells:
+            self._clear_cell(new_state, cell)
+        for cell in new_pos:
+            self._update_cell(new_state, cell, move.piece.name)
+        return Board(state=new_state, previous=self, move=move)
 
 
 def solve_board(start_board):
@@ -117,13 +129,13 @@ def solve_board(start_board):
     result = None
     while queue:
         board = queue.popleft()
-        if not board.get_piece('b'):
+        if 'b' not in board.get_pieces().keys():
             result = board
             break
         for next_board in [board.apply_move(move) for move in
                            board.get_available_moves()]:
-            if next_board._state not in visited_boards:
-                visited_boards.add(next_board._state)
+            if next_board.hash_state not in visited_boards:
+                visited_boards.add(next_board.hash_state)
                 queue.append(next_board)
     return (result, len(visited_boards))
 
