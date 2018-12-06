@@ -80,7 +80,11 @@ class Board(object):
 
     def get_available_moves(self):
         prev_move = None
+        if self.move:
+            prev_move = (-self.move.x, -self.move.y)
         opts = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+        if prev_move:
+            opts.remove(prev_move)
         moves = []
         for pce in self.get_pieces():
             for opt in opts:
