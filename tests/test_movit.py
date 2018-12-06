@@ -14,12 +14,17 @@ def test_board_init():
         ("X", "X", "X",), ("X", "a", "X",), ("X", "X", "X",),)
 
 
-def test_board_get_piece():
+def test_board_get_piece_success():
     b = Board(json_string=BOARD_2)
     p = b.get_piece('a')
     assert p
     assert p.name == 'a'
     assert p.pos_tup == ((1, 1),)
+
+def test_board_get_piece_failure():
+    b = Board(json_string=BOARD_2)
+    p = b.get_piece('w')
+    assert not p
 
 
 def test_board_get_piece_names():
@@ -95,6 +100,7 @@ def test_board_apply_exit_move():
     m = Move(b, 0, 1)
     bd2 = bd.apply_move(m)
     assert bd2 == Board(json_string=BOARD_6A)
+    assert bd2.previous == bd
 
 
 def test_move_get_next_position():
