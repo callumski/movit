@@ -2,7 +2,7 @@ VIRTUALENV=env
 V_PATH=$(VIRTUALENV)/bin
 V_COMMAND=source $(V_PATH)/activate;
 
-.PHONY: all clean setup test run
+.PHONY: all clean setup test run run-profile
 
 all: clean setup test
 
@@ -21,4 +21,7 @@ test:
 	$(V_COMMAND) py.test --verbose --flake8 --isort
 
 run:
-	$(V_COMMAND) python3 movit/movit.py "movit/default_board.json"
+	$(V_COMMAND) python3 movit/movit.py "movit/medium_board.json"
+
+run-profile:
+	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py "movit/medium_board.json"
