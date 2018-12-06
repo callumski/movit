@@ -33,16 +33,18 @@ class Move(object):
         return "{}: x:{} y:{}".format(self.piece, self.x, self.y)
 
     def get_new_position(self):
-        return tuple(
-            (sqr[0] + self.x, sqr[1] + self.y) for sqr in self.piece.pos_tup)
+        return [(sqr[0] + self.x, sqr[1] + self.y) for sqr in
+                self.piece.pos_tup]
 
 
 class Board(object):
-    def __init__(self, json_string=None, state=None, previous=None, move=None):
+    def __init__(self, json_string=None, state=None, previous=None, move=None,
+                 pieces=None):
         if json_string:
             self._state = tuple(tuple(y) for y in json.loads(json_string))
         elif state:
             self._state = state
+        self._pieces = pieces
         self.previous = previous
         self.move = move
 
@@ -50,18 +52,22 @@ class Board(object):
         return self._state == other._state
 
     def get_piece(self, name):
-        if name in self.get_piece_names():
-            return Piece(name,
-                         tuple([(x, y) for y in range(len(self._state))
-                                for x in range(len(self._state[y])) if
-                                self._state[y][x] == name]))
+        return self.get_pieces().get(name)
 
-    def get_piece_names(self):
+    def _get_piece(self, name):
+        return Piece(name, tuple([(x, y) for y in range(len(self._state))
+                                  for x in range(len(self._state[y])) if
+                                  self._state[y][x] == name]))
+
+    def _get_piece_names(self):
         return sorted(
             {j for i in self._state for j in i if j in ascii_lowercase})
 
     def get_pieces(self):
-        return [self.get_piece(name) for name in self.get_piece_names()]
+        if not self._pieces:
+            self._pieces = {name: self._get_piece(name) for name in
+                            self._get_piece_names()}
+        return self._pieces
 
     def is_move_available(self, move):
         new_pos = move.get_new_position()
@@ -86,7 +92,7 @@ class Board(object):
         if prev_move:
             opts.remove(prev_move)
         moves = []
-        for pce in self.get_pieces():
+        for pce in self.get_pieces().values():
             for opt in opts:
                 move = Move(pce, opt[0], opt[1])
                 if self.is_move_available(move):
@@ -101,14 +107,23 @@ class Board(object):
             new_y = []
             for x in range(len(self._state[y])):
                 cell = self._state[y][x]
-                if (x, y) in new_pos and cell != "Z":
+                if cell == "Z" or cell == "X":
+                    new_y.append(cell)
+                    if (x, y) in new_pos:
+                        new_pos.remove((x, y))
+                elif (x, y) in new_pos:
                     new_y.append(pce)
                 elif cell == pce:
                     new_y.append(" ")
                 else:
                     new_y.append(self._state[y][x])
             new_state.append(tuple(new_y))
-        return Board(state=tuple(new_state), previous=self, move=move)
+        new_pieces = self.get_pieces().copy()
+        new_pieces.pop(pce)
+        if new_pos:
+            new_pieces[pce] = Piece(pce, new_pos)
+        return Board(state=tuple(new_state), previous=self, move=move,
+                     pieces=new_pieces)
 
 
 def solve_board(start_board):

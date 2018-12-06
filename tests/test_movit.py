@@ -30,14 +30,15 @@ def test_board_get_piece_failure():
 
 def test_board_get_piece_names():
     b = Board(json_string=BOARD_3)
-    assert b.get_piece_names() == ['a', 'b']
+    assert b._get_piece_names() == ['a', 'b']
 
 
 def test_board_get_pieces():
     b = Board(json_string=BOARD_3)
     pieces = b.get_pieces()
     assert len(pieces) == 2
-    assert pieces[0].name == 'a'
+    assert 'a' in pieces.keys()
+    assert 'b' in pieces.keys()
 
 
 def test_board_is_move_available_success():
@@ -107,7 +108,7 @@ def test_board_apply_exit_move():
 def test_move_get_next_position():
     p = Piece('a', ((1, 1), (1, 2)))
     m = Move(p, 1, 2)
-    assert m.get_new_position() == ((2, 3), (2, 4))
+    assert m.get_new_position() == [(2, 3), (2, 4)]
     p = Piece('a', ((0, 0), (1, 0)))
     m = Move(p, 0, 2)
-    assert m.get_new_position() == ((0, 2), (1, 2))
+    assert m.get_new_position() == [(0, 2), (1, 2)]
