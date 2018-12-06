@@ -43,22 +43,26 @@ def test_board_get_pieces():
 
 def test_board_is_move_available_success():
     b = Board(json_string=BOARD_4)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 1, 0)
     assert b.is_move_available(m)
 
     b = Board(json_string=BOARD_5)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 1, 0)
     assert b.is_move_available(m)
 
 
 def test_board_is_move_available_failure():
     b = Board(json_string=BOARD_4)
-    p = b.get_piece('a')
+    p = b.get_piece('b')
     m = Move(p, 0, 1)
     assert not b.is_move_available(m)
     m = Move(p, -1, 0)
+    assert not b.is_move_available(m)
+    b = Board(json_string=BOARD_7)
+    p = b.get_piece('b')
+    m = Move(p, 0, 1)
     assert not b.is_move_available(m)
 
 
@@ -77,15 +81,16 @@ def test_board_is_exit_move_available_failure():
 
 
 def test_board_get_available_moves():
-    b = Board(json_string=BOARD_5)
-    a = b.get_piece('a')
-    c = b.get_piece('c')
-    moves = b.get_available_moves()
-    assert len(moves) == 4
-    assert Move(a, 1, 0) in moves
-    assert Move(a, 0, 1) in moves
-    assert Move(c, -1, 0) in moves
+    bd = Board(json_string=BOARD_5)
+    b = bd.get_piece('b')
+    c = bd.get_piece('c')
+    moves = bd.get_available_moves()
+    assert len(moves) == 5
+    assert Move(b, 1, 0) in moves
+    assert Move(b, 0, 1) in moves
+    assert Move(c, -1, 0, double=True) in moves
     assert Move(c, 0, -1) in moves
+    assert Move(b, -1, 0) in moves
 
 
 def test_board_apply_move():
@@ -103,6 +108,11 @@ def test_board_apply_exit_move():
     bd2 = bd.apply_move(m)
     assert bd2 == Board(json_string=BOARD_6A)
     assert bd2.previous == bd
+
+
+def test_board_get_candidate_moves():
+    bd = Board(json_string=BOARD_4)
+    assert ('b', (1, 0)) in bd._get_candidate_moves()
 
 
 def test_move_get_next_position():

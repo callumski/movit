@@ -21,8 +21,9 @@ class Piece(object):
 
 
 class Move(object):
-    def __init__(self, piece, x, y):
+    def __init__(self, piece, x, y, double=False):
         self.piece = piece
+        self.double = double
         self.x = x
         self.y = y
 
@@ -30,10 +31,14 @@ class Move(object):
         return self.__dict__ == other.__dict__
 
     def __repr__(self):
-        return "{}: x:{} y:{}".format(self.piece, self.x, self.y)
+        return "{}: x:{} y:{} double:{}".format(self.piece, self.x, self.y,
+                                                self.double)
 
     def get_new_position(self):
-        return [(sqr[0] + self.x, sqr[1] + self.y) for sqr in
+        mult = 1
+        if self.double:
+            mult = 2
+        return [(sqr[0] + (mult * self.x), sqr[1] + (mult * self.y)) for sqr in
                 self.piece.pos_tup]
 
 
@@ -72,7 +77,7 @@ class Board(object):
     def is_move_available(self, move):
         new_pos = move.get_new_position()
         for i in new_pos:
-            cell = self._state[i[1]][i[0]]
+            cell = self._get_cell(i[0], i[1])
             if not self._cell_is_free(cell, move.piece.name) \
                     and not self._piece_can_exit(cell, move.piece.name):
                 return False
@@ -84,20 +89,48 @@ class Board(object):
     def _piece_can_exit(self, cell, name):
         return cell == "Z" and name == 'b'
 
+    def _is_prev_move(self, prev, move):
+        return prev and move and prev.piece.name == move.piece.name and \
+               prev.x == move.x and prev.y == move.y
+
     def get_available_moves(self):
-        prev_move = None
-        if self.move:
-            prev_move = (-self.move.x, -self.move.y)
-        opts = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-        if prev_move:
-            opts.remove(prev_move)
         moves = []
-        for pce in self.get_pieces().values():
-            for opt in opts:
-                move = Move(pce, opt[0], opt[1])
-                if self.is_move_available(move):
-                    moves.append(move)
+        for move in [Move(self.get_pieces()[cand[0]], cand[1][0], cand[1][1])
+                     for cand in self._get_candidate_moves()]:
+
+            if self._is_prev_move(self.move, move):
+                continue
+
+            if self.is_move_available(move):
+                move.double = True
+                if not self.is_move_available(move):
+                    move.double = False
+                moves.append(move)
         return moves
+
+    def _get_cell(self, x, y):
+        return self._state[y][x]
+
+    def _get_candidate_moves(self):
+        candidates = {cand for empty in self._get_empty_cells() for cand in
+                      self._get_neighbours(empty[0], empty[1])}
+        candidates = {candidate for candidate in candidates if
+                      candidate[0] in ascii_lowercase}
+        candidates.add(('b', (0, -1)))
+        return candidates
+
+    def _get_empty_cells(self):
+        return [(x, y) for y in range(len(self._state))
+                for x in range(len(self._state[y])) if
+                self._state[y][x] == ' ']
+
+    def _get_neighbours(self, x, y):
+        nbhs = []
+        for i in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            cell = self._get_cell(x + i[0], y + i[1])
+            if cell in ascii_lowercase:
+                nbhs.append((cell, (-i[0], -i[1])))
+        return nbhs
 
     def apply_move(self, move):
         pce = move.piece.name
@@ -106,7 +139,7 @@ class Board(object):
         for y in range(len(self._state)):
             new_y = []
             for x in range(len(self._state[y])):
-                cell = self._state[y][x]
+                cell = self._get_cell(x, y)
                 if cell == "Z" or cell == "X":
                     new_y.append(cell)
                     if (x, y) in new_pos:
@@ -116,7 +149,7 @@ class Board(object):
                 elif cell == pce:
                     new_y.append(" ")
                 else:
-                    new_y.append(self._state[y][x])
+                    new_y.append(self._get_cell(x, y))
             new_state.append(tuple(new_y))
         new_pieces = self.get_pieces().copy()
         new_pieces.pop(pce)
@@ -150,7 +183,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.file:
-        args.file = THIS_DIR + "/simple_board.json"
+        args.file = THIS_DIR + "/profile_test_board.json"
 
     with open(args.file, mode="r") as file:
         board = Board(file.read())
@@ -159,9 +192,9 @@ if __name__ == '__main__':
     print("movit visited: {} unique board positions.".format(visited))
     if final_board:
         print("Here is the best solution found:")
-        solution = []
+        solution = [final_board]
         while final_board.previous:
-            solution.append(final_board)
+            solution.append(final_board.previous)
             final_board = final_board.previous
 
         solution.reverse()
