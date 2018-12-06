@@ -78,7 +78,7 @@ def test_board_is_exit_move_available_failure():
 
 def test_board_get_available_moves():
     b = Board(json_string=BOARD_5)
-    a = b.get_piece('a')
+    a = b.get_piece('b')
     c = b.get_piece('c')
     moves = b.get_available_moves()
     assert len(moves) == 4
@@ -103,6 +103,14 @@ def test_board_apply_exit_move():
     bd2 = bd.apply_move(m)
     assert bd2 == Board(json_string=BOARD_6A)
     assert bd2.previous == bd
+
+
+def test_board_get_candidate_pieces():
+    bd = Board(json_string=BOARD_4)
+    assert 'b' in bd._get_candidate_pieces()
+
+    bd = Board(json_string=BOARD_6)
+    assert bd._get_candidate_pieces() == {'e', 'b', 'f'}
 
 
 def test_move_get_next_position():

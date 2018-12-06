@@ -92,12 +92,31 @@ class Board(object):
         if prev_move:
             opts.remove(prev_move)
         moves = []
-        for pce in self.get_pieces().values():
+        for piece in [self.get_pieces()[name] for name in
+                      self._get_candidate_pieces()]:
             for opt in opts:
-                move = Move(pce, opt[0], opt[1])
+                move = Move(piece, opt[0], opt[1])
                 if self.is_move_available(move):
                     moves.append(move)
         return moves
+
+    def _get_candidate_pieces(self):
+        candidates = [self._state[1][0] for empty in
+                      self._get_empty_cells() for cell in
+                      self._get_neighbours(empty[0], empty[1])]
+        candidates = {candidate for candidate in candidates if
+                      candidate in ascii_lowercase}
+        candidates.add('b')
+        return candidates
+
+    def _get_empty_cells(self):
+        return [(x, y) for y in range(len(self._state))
+                for x in range(len(self._state[y])) if
+                self._state[y][x] == ' ']
+
+    def _get_neighbours(self, x, y):
+        nbhs = [[x + 1, y], [x, y + 1], [x - 1, y], [x, y - 1]]
+        return nbhs
 
     def apply_move(self, move):
         pce = move.piece.name
