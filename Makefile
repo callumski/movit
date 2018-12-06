@@ -1,6 +1,7 @@
 VIRTUALENV=env
 V_PATH=$(VIRTUALENV)/bin
 V_COMMAND=source $(V_PATH)/activate;
+BOARD="movit/profile_test_board.json"
 
 .PHONY: all clean setup test run run-profile
 
@@ -21,7 +22,7 @@ test:
 	$(V_COMMAND) py.test --verbose --flake8 --isort
 
 run:
-	$(V_COMMAND) python3 movit/movit.py "movit/medium_board.json"
+	$(V_COMMAND) python3 movit/movit.py ${BOARD}
 
 run-profile:
-	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py "movit/medium_board.json"
+	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py ${BOARD}
