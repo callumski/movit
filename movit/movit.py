@@ -80,11 +80,7 @@ class Board(object):
 
     def get_available_moves(self):
         prev_move = None
-        if self.move:
-            prev_move = (-1 * self.move.x, -1 * self.move.y)
         opts = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-        if prev_move:
-            opts.remove(prev_move)
         moves = []
         for pce in self.get_pieces():
             for opt in opts:
@@ -114,16 +110,18 @@ class Board(object):
 def solve_board(start_board):
     queue = deque([start_board])
     visited_boards = set()
+    result = None
     while queue:
         board = queue.popleft()
         if not board.get_piece('b'):
-            return board
+            result = board
+            break
         for next_board in [board.apply_move(move) for move in
                            board.get_available_moves()]:
             if next_board._state not in visited_boards:
                 visited_boards.add(next_board._state)
                 queue.append(next_board)
-
+    return (result, len(visited_boards))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
@@ -137,8 +135,10 @@ if __name__ == '__main__':
     with open(args.file, mode="r") as file:
         board = Board(file.read())
 
-    final_board = solve_board(board)
+    final_board, visited = solve_board(board)
+    print("movit visited: {} unique board positions.".format(visited))
     if final_board:
+        print("Here is the best solution found:")
         solution = []
         while final_board.previous:
             solution.append(final_board)
@@ -150,3 +150,5 @@ if __name__ == '__main__':
             for y in state._state:
                 print(y)
             print("--------------------------------")
+    else:
+        print("No solution was found :(")
