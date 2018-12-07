@@ -7,10 +7,21 @@ from string import ascii_lowercase
 
 THIS_DIR = str(Path(__file__).resolve().parent)
 
-""""""
+"""movit: A small project to find the solution to the puzzle outlined below.
+    The solution involves moving pieces around the board and eventually moving
+    b through Z in as few moves as possible.
+
+    Once solved, it shows the moves from initial state to the final state in
+    the optimal solution.
+
+"""
 
 
 class Piece(object):
+    """
+    Convenience class to hold the coordinates of a piece on the Board.
+    """
+
     def __init__(self, name, pos_tup):
         self.name = name
         self.pos_tup = pos_tup
@@ -23,6 +34,10 @@ class Piece(object):
 
 
 class Move(object):
+    """
+    Convenience class to represent a move of a piece on the Board.
+    """
+
     def __init__(self, piece, x, y, double=False):
         self.piece = piece
         self.double = double
@@ -37,6 +52,13 @@ class Move(object):
                                                 self.double)
 
     def get_new_position(self):
+        """
+        Get the new position of the Piece.
+
+        Add the move (doubling if necessary) to the Pieces positions.
+        :return: a list of cartesian tuples.
+        spider)
+        """
         mult = 1
         if self.double:
             mult = 2
@@ -45,6 +67,10 @@ class Move(object):
 
 
 class Board(object):
+    """
+    Class to hold Board we are playing on, with several helper methods.
+    """
+
     def __init__(self, json_string=None, state=None, previous=None, move=None,
                  pieces=None):
         if json_string:
@@ -62,6 +88,8 @@ class Board(object):
         return self.get_pieces().get(name)
 
     def _get_piece(self, name):
+        """For a given piece name, find all it's cells on the Board, build a
+        Piece onject and return it."""
         return Piece(name, tuple([(x, y) for y in range(len(self._state))
                                   for x in range(len(self._state[y])) if
                                   self._state[y][x] == name]))
@@ -71,12 +99,21 @@ class Board(object):
             {j for i in self._state for j in i if j in ascii_lowercase})
 
     def get_pieces(self):
+        """ Lazily fetch the dict of Pieces."""
         if not self._pieces:
             self._pieces = {name: self._get_piece(name) for name in
                             self._get_piece_names()}
         return self._pieces
 
     def is_move_available(self, move):
+        """
+        Is the provided Move possible on this Baord.
+
+        Get the position where the Piece would end up. Check that it will be
+        either on free space or a space it currently occupies. If the piece is
+        piece 'b' then that can sit on the 'Z' cells.
+        :return: a Move object
+        """
         new_pos = move.get_new_position()
         for i in new_pos:
             try:
@@ -95,6 +132,13 @@ class Board(object):
         return cell == "Z" and name == 'b'
 
     def get_available_moves(self):
+        """
+        Get a list of the Moves possible on this Baord.
+
+        For each piece, see if it can move in any direction. However, do not
+        try the move that brought us here.
+        :return: a list of Move objects
+        """
         prev_move = None
         if self.move:
             prev_move = (-self.move.x, -self.move.y)
@@ -113,6 +157,14 @@ class Board(object):
         return moves
 
     def apply_move(self, move):
+        """
+        Apply a Moves possible to the  Baord.
+
+        Redraw a new Board that is the reuslt of applying to Move. Also make
+        sure the Move and this Board are stored on the new one.
+        :param: a Move object
+        :return: a new Board Object
+        """
         pce = move.piece.name
         new_pos = move.get_new_position()
         new_state = []
@@ -120,9 +172,12 @@ class Board(object):
             new_y = []
             for x in range(len(self._state[y])):
                 cell = self._state[y][x]
+                # We might go over the edge, if so it is legal
                 if cell == "Z" or cell == "X":
                     new_y.append(cell)
                     if (x, y) in new_pos:
+                        # but we need to remove the cells from the piece
+                        # to avoid IndexErrors
                         new_pos.remove((x, y))
                 elif (x, y) in new_pos:
                     new_y.append(pce)
@@ -131,6 +186,7 @@ class Board(object):
                 else:
                     new_y.append(self._state[y][x])
             new_state.append(tuple(new_y))
+        # Update this list of pieces and pass it on to avoid recalculating.
         new_pieces = self.get_pieces().copy()
         new_pieces.pop(pce)
         if new_pos:
@@ -140,16 +196,30 @@ class Board(object):
 
 
 def solve_board(start_board, all_solutions, find_n=-1, json_output=False):
+    """
+    Find the solution(s) to a  Baord.
+
+    Iterate through the available Moves for each Baord in a Breadth First
+    Search. Depending on the settings stop at the first solution.
+    :param: start_board: a Board object
+    :param: all_solutions: bool: do we search for all solutions
+    :param: find_n: an int of how many solutions to search for
+    :param: json_output: bool: should we output in JSON
+    :return: a new Board Object
+    """
     queue = deque([start_board])
     visited_boards = set()
     results = 0
     while queue:
+        # pop left and append from the other end
         board = queue.popleft()
+        # Have we got 'b' off the board?
         if not board.get_piece('b'):
             results += 1
             print_solution(results, board, len(visited_boards), json_output)
             if results == find_n and not all_solutions:
                 break
+        #
         for next_board in [board.apply_move(move) for move in
                            board.get_available_moves()]:
             if next_board._state not in visited_boards:
@@ -159,6 +229,8 @@ def solve_board(start_board, all_solutions, find_n=-1, json_output=False):
 
 
 def print_solution(num, board, visited, json_output):
+    """Build the list of board states in the solution and pass them to the
+    right function"""
     boards = []
     while board.previous:
         boards.append(board._state)
@@ -173,6 +245,7 @@ def print_solution(num, board, visited, json_output):
 
 
 def print_json(num, boards, visited):
+    """ Outout a solution in JSON Lines format."""
     print(
         "{{\"solution_nunber\": {}, \"board_states_visited\": {},"
         " \"board_states\": [{}]}}".format(
@@ -180,6 +253,7 @@ def print_json(num, boards, visited):
 
 
 def print_for_human(num, boards, visited):
+    """ Outout a solution in human readable format."""
     print("Here is solution {} - found from visiting {} unique board "
           "positions:".format(num, visited))
 
