@@ -1,7 +1,7 @@
 VIRTUALENV=env
 V_PATH=$(VIRTUALENV)/bin
 V_COMMAND=source $(V_PATH)/activate;
-BOARD="movit/profile_test_board.json"
+BOARD="movit/default_board.json"
 
 .PHONY: all clean setup test run run-profile
 
