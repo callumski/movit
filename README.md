@@ -160,10 +160,9 @@ search is stopped part way. It also means that the output can be parsed in a mem
 
 The following extensions are possible:
 
-* More rests for the display
+* More tests for the display
 * Validation of functionality on other operating systems
 * Giving it an end-to-end HTML UI to allow it to be deployed as a web application
-* Storing of output in a database
 * Deploying in a Docker container
 * Improving the Board handling as it is quite ineffiecient
 * Refactoring to a simpler structure
