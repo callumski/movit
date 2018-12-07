@@ -181,17 +181,27 @@ def print_for_human(num, boards, visited):
     print("Here is solution {} - found from visting {} unique board "
           "positions:".format(num, visited))
 
-    print("---------------------------------------------------------------")
+    for chunk in chunks(boards, 6):
+        print_chunk(chunk)
+    print(
+        "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")  # noqa
 
+
+def print_chunk(boards):
+    print(
+        "---------------------------------------------------------------------------------------------------------")  # noqa
     for i in range(len(boards[0])):
         line = []
         for bd in boards:
             line += bd[i]
-            line += ["         "]
+            line += ["    "]
         print("   " + " ".join(line))
 
-    print(
-        "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 if __name__ == '__main__':
@@ -208,12 +218,12 @@ parser.add_argument("--json-output", help="output solutions as json lines see:"
 args = parser.parse_args()
 
 if not args.file:
-    args.file = THIS_DIR + "/simple_board.json"
+    args.file = THIS_DIR + "/profile_test_board.json"
 
 with open(args.file, mode="r") as file:
     board = Board(file.read())
 
-results = solve_board(board, args.find_all, args.find_n, args.json_output)
+results = solve_board(board, args.find_all, args.find_n, json_output=args.json_output)
 
 if not args.json_output:
     if results:
