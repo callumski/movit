@@ -7,6 +7,8 @@ from string import ascii_lowercase
 
 THIS_DIR = str(Path(__file__).resolve().parent)
 
+""""""
+
 
 class Piece(object):
     def __init__(self, name, pos_tup):
@@ -208,29 +210,30 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="movit.py: Finds solutions "
                     "to a board problem.")
-parser.add_argument("file", help="full path to JSON file of board setup",
-                    nargs='?')
-parser.add_argument("--find-all", dest="find_all", action="store_true",
-                    help="find all possible solutions")
-parser.add_argument("--find-n", type=int,
-                    help="find N solutions: default is 1", default=1)
-parser.add_argument("--json-output", dest="json_output", action="store_true",
-                    help="output solutions as JSON Lines see:"
-                         " http://jsonlines.org/")
+    parser.add_argument("file", help="full path to JSON file of board setup",
+                        nargs='?')
+    parser.add_argument("--find-all", dest="find_all", action="store_true",
+                        help="find all possible solutions")
+    parser.add_argument("--find-n", type=int,
+                        help="find N solutions: default is 1", default=1)
+    parser.add_argument("--json-output", dest="json_output",
+                        action="store_true",
+                        help="output solutions as JSON Lines see:"
+                             " http://jsonlines.org/")
 
-args = parser.parse_args()
-if not args.file:
-    parser.print_help()
-    exit(1)
+    args = parser.parse_args()
+    if not args.file:
+        parser.print_help()
+        exit(1)
 
-with open(args.file, mode="r") as file:
-    board = Board(file.read())
+    with open(args.file, mode="r") as file:
+        board = Board(file.read())
 
-results = solve_board(board, args.find_all, args.find_n,
-                      json_output=args.json_output)
+    results = solve_board(board, args.find_all, args.find_n,
+                          json_output=args.json_output)
 
-if not args.json_output:
-    if results:
-        print("Found {} solutions.".format(results))
-    else:
-        print("No solution was found :(")
+    if not args.json_output:
+        if results:
+            print("Found {} solutions.".format(results))
+        else:
+            print("No solution was found :(")
