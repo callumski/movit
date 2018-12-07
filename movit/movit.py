@@ -137,7 +137,7 @@ class Board(object):
                      pieces=new_pieces)
 
 
-def solve_board(start_board, all_solutions, find_n=-1):
+def solve_board(start_board, all_solutions, find_n=-1, json_output=False):
     queue = deque([start_board])
     visited_boards = set()
     results = 0
@@ -145,7 +145,7 @@ def solve_board(start_board, all_solutions, find_n=-1):
         board = queue.popleft()
         if not board.get_piece('b'):
             results += 1
-            print_solution(results, board, len(visited_boards))
+            print_solution(results, board, len(visited_boards), json_output)
             if results == find_n and not all_solutions:
                 break
         for next_board in [board.apply_move(move) for move in
@@ -156,41 +156,66 @@ def solve_board(start_board, all_solutions, find_n=-1):
     return results
 
 
-def print_solution(num, board, visited):
-    print("Here is solution {} - found from visting {} unique board "
-          "positions:".format(num, visited))
+def print_solution(num, board, visited, json_output):
     boards = []
     while board.previous:
-        boards.append(board)
+        boards.append(board._state)
         board = board.previous
 
     boards.reverse()
-    print("--------------------------------")
-    for board in boards:
-        for y in board._state:
-            print(y)
-        print("--------------------------------")
 
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    if json_output:
+        print_json(num, boards, visited)
+    else:
+        print_for_human(num, boards, visited)
+
+
+def print_json(num, boards, visited):
+    print(
+        "{{\"solution_nunber\": {}, \"board_states_visited\": {},"
+        " \"board_states\": [{}]}}".format(
+            num, visited, json.dumps(boards)))
+
+
+def print_for_human(num, boards, visited):
+    print("Here is solution {} - found from visting {} unique board "
+          "positions:".format(num, visited))
+
+    print("---------------------------------------------------------------")
+
+    for i in range(len(boards[0])):
+        line = []
+        for bd in boards:
+            line += bd[i]
+            line += ["         "]
+        print("   " + " ".join(line))
+
+    print(
+        "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
-                                                 "to a board problem.")
-    parser.add_argument("file", help="JSON file of board setup", nargs='?')
-    parser.add_argument("--find-all", help="Find all possible solutions")
-    parser.add_argument("--find-n", type=int,
-                        help="find N solutions: default is 1", default=1)
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="movit.py: Finds solutions "
+                    "to a board problem.")
+parser.add_argument("file", help="JSON file of board setup", nargs='?')
+parser.add_argument("--find-all", help="Find all possible solutions")
+parser.add_argument("--find-n", type=int,
+                    help="find N solutions: default is 1", default=1)
+parser.add_argument("--json-output", help="output solutions as json lines see:"
+                                          " http://jsonlines.org/")
 
-    if not args.file:
-        args.file = THIS_DIR + "/simple_board.json"
+args = parser.parse_args()
 
-    with open(args.file, mode="r") as file:
-        board = Board(file.read())
+if not args.file:
+    args.file = THIS_DIR + "/simple_board.json"
 
-    results = solve_board(board, args.find_all, args.find_n)
+with open(args.file, mode="r") as file:
+    board = Board(file.read())
 
+results = solve_board(board, args.find_all, args.find_n, args.json_output)
+
+if not args.json_output:
     if results:
         print("Found {} solutions.".format(results))
     else:
