@@ -178,7 +178,7 @@ def print_json(num, boards, visited):
 
 
 def print_for_human(num, boards, visited):
-    print("Here is solution {} - found from visting {} unique board "
+    print("Here is solution {} - found from visiting {} unique board "
           "positions:".format(num, visited))
 
     for chunk in chunks(boards, 6):
@@ -208,22 +208,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="movit.py: Finds solutions "
                     "to a board problem.")
-parser.add_argument("file", help="JSON file of board setup", nargs='?')
-parser.add_argument("--find-all", help="Find all possible solutions")
+parser.add_argument("file", help="full path to JSON file of board setup",
+                    nargs='?')
+parser.add_argument("--find-all", dest="find_all", action="store_true",
+                    help="find all possible solutions")
 parser.add_argument("--find-n", type=int,
                     help="find N solutions: default is 1", default=1)
-parser.add_argument("--json-output", help="output solutions as json lines see:"
-                                          " http://jsonlines.org/")
+parser.add_argument("--json-output", dest="json_output", action="store_true",
+                    help="output solutions as JSON Lines see:"
+                         " http://jsonlines.org/")
 
 args = parser.parse_args()
-
 if not args.file:
-    args.file = THIS_DIR + "/profile_test_board.json"
+    parser.print_help()
+    exit(1)
 
 with open(args.file, mode="r") as file:
     board = Board(file.read())
 
-results = solve_board(board, args.find_all, args.find_n, json_output=args.json_output)
+results = solve_board(board, args.find_all, args.find_n,
+                      json_output=args.json_output)
 
 if not args.json_output:
     if results:

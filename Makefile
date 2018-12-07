@@ -3,7 +3,7 @@ V_PATH=$(VIRTUALENV)/bin
 V_COMMAND=source $(V_PATH)/activate;
 BOARD="movit/default_board.json"
 
-.PHONY: all clean setup test run run-profile
+.PHONY: all clean setup test run run-json run-profile run-ten run-ten-json run-ten-profile run-all run-all-profile
 
 all: clean setup test
 
@@ -25,7 +25,7 @@ run:
 	$(V_COMMAND) python3 movit/movit.py ${BOARD}
 
 run-json:
-	@$(V_COMMAND) python3 movit/movit.py --json-output ${BOARD}
+	$(V_COMMAND) python3 movit/movit.py --json-output ${BOARD}
 
 run-profile:
 	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py ${BOARD}
