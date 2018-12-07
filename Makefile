@@ -26,3 +26,17 @@ run:
 
 run-profile:
 	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py ${BOARD}
+
+run-ten:
+	$(V_COMMAND) python3 movit/movit.py --find-n 10 ${BOARD}
+
+run-ten-profile:
+	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py --find-n 10 ${BOARD}
+
+run-all:
+	$(V_COMMAND) python3 movit/movit.py --find-all ${BOARD}
+
+run-all-profile:
+	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py --find-all ${BOARD}
+
+

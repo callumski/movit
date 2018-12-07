@@ -137,27 +137,50 @@ class Board(object):
                      pieces=new_pieces)
 
 
-def solve_board(start_board):
+def solve_board(start_board, all_solutions, find_n=-1):
     queue = deque([start_board])
     visited_boards = set()
-    result = None
+    results = 0
     while queue:
         board = queue.popleft()
         if not board.get_piece('b'):
-            result = board
-            break
+            results += 1
+            print_solution(results, board, len(visited_boards))
+            if results == find_n and not all_solutions:
+                break
         for next_board in [board.apply_move(move) for move in
                            board.get_available_moves()]:
             if next_board._state not in visited_boards:
                 visited_boards.add(next_board._state)
                 queue.append(next_board)
-    return (result, len(visited_boards))
+    return results
+
+
+def print_solution(num, board, visited):
+    print("Here is solution {} - found from visting {} unique board "
+          "positions:".format(num, visited))
+    boards = []
+    while board.previous:
+        boards.append(board)
+        board = board.previous
+
+    boards.reverse()
+    print("--------------------------------")
+    for board in boards:
+        for y in board._state:
+            print(y)
+        print("--------------------------------")
+
+    print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="movit.py: Finds solutions "
                                                  "to a board problem.")
     parser.add_argument("file", help="JSON file of board setup", nargs='?')
+    parser.add_argument("--find-all", help="Find all possible solutions")
+    parser.add_argument("--find-n", type=int,
+                        help="find N solutions: default is 1", default=1)
     args = parser.parse_args()
 
     if not args.file:
@@ -166,20 +189,9 @@ if __name__ == '__main__':
     with open(args.file, mode="r") as file:
         board = Board(file.read())
 
-    final_board, visited = solve_board(board)
-    print("movit visited: {} unique board positions.".format(visited))
-    if final_board:
-        print("Here is the best solution found:")
-        solution = []
-        while final_board.previous:
-            solution.append(final_board)
-            final_board = final_board.previous
+    results = solve_board(board, args.find_all, args.find_n)
 
-        solution.reverse()
-
-        for state in solution:
-            for y in state._state:
-                print(y)
-            print("--------------------------------")
+    if results:
+        print("Found {} solutions.".format(results))
     else:
         print("No solution was found :(")
