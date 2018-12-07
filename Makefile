@@ -24,11 +24,17 @@ test:
 run:
 	$(V_COMMAND) python3 movit/movit.py ${BOARD}
 
+run-json:
+	@$(V_COMMAND) python3 movit/movit.py --json-output ${BOARD}
+
 run-profile:
 	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py ${BOARD}
 
 run-ten:
 	$(V_COMMAND) python3 movit/movit.py --find-n 10 ${BOARD}
+
+run-ten-json:
+	@$(V_COMMAND) python3 movit/movit.py --find-n 10 --json-output ${BOARD}
 
 run-ten-profile:
 	$(V_COMMAND) python -m cProfile -s cumtime movit/movit.py --find-n 10 ${BOARD}
